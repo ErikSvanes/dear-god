@@ -1,11 +1,5 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Poppins } from 'next/font/google'
-
-const poppins = Poppins({
-  weight: ['600'],
-  subsets: ['latin'],
-})
 
 export default function Home() {
   return (
