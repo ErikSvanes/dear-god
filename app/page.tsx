@@ -63,7 +63,7 @@ export default function Home() {
                   type="text"
                   name="q"
                   placeholder="¿Cómo te sientes hoy?"
-                  className="w-full px-6 py-4 rounded-2xl border border-gray-200 shadow-[0_3px_10px_0px_rgba(0,0,0,0.3)] focus:outline-none focus:ring-2 text-[#1E255E]"
+                  className="w-full px-6 py-4 rounded-2xl border border-gray-200 shadow-[0_3px_10px_0px_rgba(0,0,0,0.15)] focus:outline-none focus:ring-2 text-[#1E255E]"
                 />
                 <button 
                   type="submit"
@@ -79,7 +79,7 @@ export default function Home() {
               <div className="flex flex-row justify-center mt-8">
                 <Link 
                   href="/get-started"
-                  className="inline-block w-full md:w-[35%] px-8 py-4 bg-[#FE875C] text-white rounded-full font-medium text-center shadow-[0_3px_10px_0px_rgba(0,0,0,0.3)]"
+                  className="inline-block w-full md:w-[35%] px-8 py-4 bg-[#FE875C] text-white rounded-full font-medium text-center shadow-[0_5px_10px_0px_rgba(0,0,0,0.15)]"
                 >
                   Empezar
                 </Link>
