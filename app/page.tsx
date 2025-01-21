@@ -1,7 +1,19 @@
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function Home() {
+  const [inputText, setInputText] = useState<string>('')
+  const router = useRouter();
+
+  const handleSubmit = (e: any) => {
+    e.preventDefault();
+    router.push(`/desktop?text=${encodeURIComponent(inputText)}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#B4E8FE] via-[#FFFFFF] to-[#FCE6AA]">
       {/* Navigation */}
@@ -58,10 +70,12 @@ export default function Home() {
               </h1>
 
               {/* Search bar */}
-              <form className="relative mt-8" action="/search">
+              <form className="relative mt-8" onSubmit={handleSubmit}>
                 <input
                   type="text"
                   name="q"
+                  value={inputText}
+                  onChange={(e) => setInputText(e.target.value)}
                   placeholder="¿Cómo te sientes hoy?"
                   className="w-full px-6 py-4 rounded-2xl border border-gray-200 shadow-[0_5px_15px_-5px_rgba(0,0,0,0.15)] focus:outline-none focus:ring-2 text-[#1E255E]"
                 />
@@ -78,7 +92,7 @@ export default function Home() {
               {/* Action button */}
               <div className="flex flex-row justify-center mt-8">
                 <Link 
-                  href="/get-started"
+                  href={`/desktop?text=${encodeURIComponent(inputText)}`}
                   className="inline-block w-full md:w-[35%] px-8 py-4 bg-[#FE875C] text-white rounded-full font-medium text-center shadow-[0_5px_10px_0px_rgba(0,0,0,0.15)]"
                 >
                   Empezar

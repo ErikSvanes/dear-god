@@ -1,0 +1,39 @@
+.sidebar-buttons {
+    @apply text-[#28283B] text-sm border border-transparent hover:shadow-[0_5px_15px_-5px_rgba(0,0,0,0.3)] p-2 rounded-md text-left text-nowrap flex items-center gap-2;
+}
+
+.prompt-buttons {
+    @apply bg-[#FE875CA3] border border-[#F9FAFB] border-[1px] rounded-full py-1 px-2 mx-2 text-white text-[14px] hover:shadow-[0_5px_15px_-5px_rgba(0,0,0,0.3)];
+}
+
+.custom-scrollbar {
+    /* For Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(40, 40, 59, 0.3) transparent;
+    border-radius: 40px;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    border-radius: 20px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 20px;
+    margin: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-button {
+    display: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(40, 40, 59, 0.3);
+    border-radius: 20px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(40, 40, 59, 0.5);
+}
