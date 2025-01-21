@@ -9,7 +9,7 @@ export default function Home() {
   const [inputText, setInputText] = useState<string>('')
   const router = useRouter();
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     router.push(`/desktop?text=${encodeURIComponent(inputText)}`);
   };
