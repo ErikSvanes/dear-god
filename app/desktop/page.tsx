@@ -91,10 +91,14 @@ const PageLayout: React.FC = () => {
         messages: []
       }]);
     }
+
+    if (window.innerWidth >= 768) {
+      setSidebarOpen(true);
+    }
   }, []); // Empty dependency array means this runs once on mount
 
   const [activeChat, setActiveChat] = useState<string>('1');
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
   const [inputValue, setInputValue] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -150,17 +154,17 @@ const PageLayout: React.FC = () => {
     scrollToBottom();
   }, [chats, isTyping]);
 
-  // useEffect(() => {
-  //   if (!isTyping) {
-  //     console.log('Active chat or model typing changed, attempting to focus input');
-  //     inputRef.current?.focus();
-  //   }
-  // }, [activeChat, isTyping]);
-
   useEffect(() => {
     console.log('Active chat or model typing changed, attempting to focus input');
     inputRef.current?.focus();
-  }, [activeChat, isTyping]);
+  }, [isTyping]);
+
+  useEffect(() => {
+    if (!isTyping && window.innerWidth >= 768) { // Only auto-focus on desktop
+      console.log('Active chat or model typing changed, attempting to focus input');
+      inputRef.current?.focus();
+    }
+   }, [activeChat]);
 
   const handleNewChat = (): void => {
     const newChat: Chat = {
@@ -510,7 +514,7 @@ const PageLayout: React.FC = () => {
                     ${ isTyping ? 'bg-gray-100' : ''
                     }`}
                   disabled={isTyping}
-                  autoFocus
+                  // autoFocus
                 />
                 <button 
                   type="submit"
