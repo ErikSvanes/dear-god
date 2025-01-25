@@ -432,7 +432,7 @@ const PageLayout: React.FC = () => {
         </div>
 
         {/* Chat Area */}
-        <div className="relative flex-1 flex flex-col overflow-hidden shadow-[0_4px_4px_1px_rgba(0,0,0,0.25)] mt-74 mb-8 mx-8 rounded-3xl bg-white bg-opacity-20 backdrop-blur-2xl">
+        <div className="h-[90%] md:h-[97%] relative flex-1 flex flex-col overflow-hidden shadow-[0_4px_4px_1px_rgba(0,0,0,0.25)] mt-74 mb-8 mx-8 rounded-3xl bg-white bg-opacity-20 backdrop-blur-2xl">
           { currentChat && currentChat.messages.length === 0 && (
             <div className="absolute w-full h-full flex justify-center pointer-events-none">
               <Image
