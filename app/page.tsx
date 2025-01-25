@@ -19,7 +19,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className="flex w-[100vw] justify-between items-center md:p-4 pt-4 absolute">
         <div className="flex items-center">
-          <Link href="/" className="text-[#6B7280] text-md font-bold flex items-center gap-4 ml-16">
+          <Link href="/" className="text-[#6B7280] text-md font-bold flex items-center gap-4 ml-8 md:ml-16">
             <Image 
               src="/logo.png"
               alt="Querido Dios Logo"
@@ -39,7 +39,7 @@ export default function Home() {
           </Link>
           <Link 
             href="/signup"
-            className="px-4 py-2 rounded-md border border-black hover:border-gray-600 hover:text-gray-600 text-black mr-16"
+            className="px-4 py-2 rounded-md border border-black hover:border-gray-600 hover:text-gray-600 text-black mr-8 md:mr-16"
           >
             Sign up
           </Link>
