@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#B4E8FE] via-[#FFFFFF] to-[#FCE6AA]">
       {/* Navigation */}
-      <nav className="flex w-[100vw] justify-between items-center p-4 absolute">
+      <nav className="flex w-[100vw] justify-between items-center md:p-4 pt-4 absolute">
         <div className="flex items-center">
           <Link href="/" className="text-[#6B7280] text-md font-bold flex items-center gap-4 ml-16">
             <Image 
