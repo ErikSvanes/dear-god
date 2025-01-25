@@ -212,10 +212,11 @@ const PageLayout: React.FC = () => {
   const deleteChat = (chatId: string): void => {
     if (chats.length === 1) return;
 
+    const chatIndex = chats.findIndex(chat => chat.id === chatId);
+    const nextChat = chats[chatIndex + 1] || chats[chatIndex - 1];
+    
     setChats(prevChats => prevChats.filter(chat => chat.id !== chatId));
-    if (activeChat === chatId) {
-      setActiveChat(chats[0]?.id || '');
-    }
+    setActiveChat(nextChat.id);
   };
 
   const handleClearConversations = (): void => {
@@ -284,13 +285,23 @@ const PageLayout: React.FC = () => {
       </nav>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden z-[1]">
+      <div className="flex-1 flex overflow-hidden z-[1] relative">
         {/* Sidebar */}
         <div 
           className={`${
-            sidebarOpen ? 'w-[24vw] mr-[0rem]' : 'w-0 mr-0'
-          } flex-shrink-0 transition-all duration-300 overflow-hidden h-[80vh] flex flex-col self-center pl-6`}
+            sidebarOpen ? 'w-[60vw] md:w-[24vw] mr-[0rem] bg-[#FFFFFFDE]' : 'w-0 mr-0'
+          } fixed md:static z-[50] md:bg-transparent top-[70px] left-0 h-[calc(100vh-70px)] pb-16 md:pb-0
+            transition-all duration-300 overflow-hidden md:h-[80vh] flex flex-col self-center pl-6`}
         >
+
+          {/* Chat Area with overlay */}
+          {sidebarOpen && (
+            <div 
+              className="fixed md:hidden top-[70px] left-[60vw] right-0 bottom-0 z-40 bg-gradient-to-r from-[#FFFFFFDE] to-black/40"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
           {/* Chat List */}
           <div className={`w-full h-full overflow-y-auto p-2 ${styles['custom-scrollbar']}`}>
             <div className="space-y-2 border border-transparent">
@@ -318,7 +329,8 @@ const PageLayout: React.FC = () => {
                   </button>
                   <button 
                     onClick={() => deleteChat(chat.id)}
-                    className="group opacity-0 group-hover:opacity-100 text-[#28283B] hover:text-gray-200"
+                    className="md:group-hover:opacity-100 md:opacity-0 opacity-100 text-[#28283B] hover:text-gray-200"
+                    // className="group opacity-0 group-hover:opacity-100 text-[#28283B] hover:text-gray-200"
                   >
                     <Image
                       src="/trashcan.png"
@@ -335,7 +347,12 @@ const PageLayout: React.FC = () => {
           <div className="flex flex-col p-2 space-y-2">
             {/* New Chat */}
             <button
-              onClick={handleNewChat}
+              onClick={() => {
+                handleNewChat();
+                if (window.innerWidth < 768) {
+                  setSidebarOpen(false);
+                }
+              }}
               className={`${styles['sidebar-buttons']}`}
             >
               <Image
