@@ -165,7 +165,7 @@ const PageLayout: React.FC = () => {
     };
     setChats(prevChats => [...prevChats, newChat]);
     setActiveChat(newChat.id);
-    handleInputChange({ target: { value: '' } } as any);
+    handleInputChange({ target: { value: '' } } as React.ChangeEvent<HTMLInputElement>);
   };
 
   const deleteChat = (chatId: string): void => {
