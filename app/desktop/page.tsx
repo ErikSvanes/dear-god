@@ -1,5 +1,7 @@
 'use client'
 import React, { useState, useRef, useEffect } from 'react';
+import { useChat as useVercelChat } from 'ai/react';
+import { v4 as uuidv4 } from 'uuid';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './desktop.module.css';
@@ -28,81 +30,93 @@ const PROMPT_SUGGESTIONS = [
   { id: 'prayers', text: 'Prayers / Spirutal Requests', prompt: 'I would like to offer a prayer for guidance and support.' }
 ];
 
-// Components
-const TypingIndicator: React.FC<TypingIndicatorProps> = ({ className = '' }) => (
-  <div className={`flex gap-4 p-4 ${className}`}>
-    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-green-500 text-[#28283B] text-xs">
-      [BOT]
-    </div>
-    <div className="flex-1">
-      <div className="flex space-x-2 mt-3">
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-      </div>
-    </div>
-  </div>
-);
+// ----------------------------------------------
+function useCustomChat() {
+  const [chats, setChats] = useState<Chat[]>([{
+    id: uuidv4(),
+    title: 'New Chat',
+    messages: []
+  }])
+  const [activeChat, setActiveChat] = useState<string>(chats[0].id)
+  const [isLoading, setIsLoading] = useState(false)
+  
+  const { append, messages: vercelMessages, input, handleInputChange, handleSubmit: vercelHandleSubmit, isLoading: vercelIsLoading } = useVercelChat({
+    id: activeChat
+  })
+
+  const handleInitialMessage = async (message: string) => {
+    setIsLoading(true);
+    const newChat: Chat = {
+      id: uuidv4(),
+      title: message.substring(0, 30) + (message.length > 30 ? '...' : ''),
+      messages: [{
+        role: 'user',
+        content: message
+      }]
+    };
+
+    // Add the new chat and set it as active
+    setChats([newChat]);
+    setActiveChat(newChat.id);
+
+    // Send the message to the chatbot
+    await append({
+      role: 'user',
+      content: message
+    });
+
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    setIsLoading(vercelIsLoading)
+  }, [vercelIsLoading])
+
+  useEffect(() => {
+    setChats(prevChats => 
+      prevChats.map(chat => 
+        chat.id === activeChat 
+          ? {
+              ...chat,
+              messages: vercelMessages.map(m => ({
+                role: m.role as 'assistant' | 'user',
+                content: m.content
+              }))
+            }
+          : chat
+      )
+    )
+  }, [vercelMessages, activeChat])
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    await vercelHandleSubmit(e)
+  }
+
+  return { chats, activeChat, setActiveChat, setChats, input, handleInputChange, handleSubmit, isLoading, handleInitialMessage, append }
+}
+// ----------------------------------------------
 
 const PageLayout: React.FC = () => {
   // State management
-  const [chats, setChats] = useState<Chat[]>([]);  // Initialize empty to avoid duplicate initialization
-  
+  const { chats, activeChat, setActiveChat, setChats, input, handleInputChange, handleSubmit, isLoading, handleInitialMessage, append } = useCustomChat();
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
   // Initialize chat with URL parameter if present
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const textParam = searchParams.get('text');
     
     if (textParam) {
-      // Create a new chat with the URL parameter as the first user message
-      const newChat: Chat = {
-        id: Date.now().toString(),
-        title: textParam.substring(0, 30) + (textParam.length > 30 ? '...' : ''),
-        messages: [
-          { role: 'user', content: textParam }
-        ]
-      };
-      
-      setChats([newChat]);
-      setActiveChat(newChat.id);
-      
-      // Simulate response to the initial message
-      setIsTyping(true);
-      setTimeout(() => {
-        const response: Message = { 
-          role: 'assistant', 
-          content: 'This is a simulated response to your initial message.' 
-        };
-        
-        setChats(prevChats => 
-          prevChats.map(chat => 
-            chat.id === newChat.id 
-              ? { ...chat, messages: [...chat.messages, response] }
-              : chat
-          )
-        );
-        setIsTyping(false);
-      }, 1500);
-    } else {
-      // If no URL parameter, initialize with default chat
-      setChats([{
-        id: '1',
-        title: 'New Chat',
-        messages: []
-      }]);
+      handleInitialMessage(textParam);
     }
 
     if (window.innerWidth >= 768) {
       setSidebarOpen(true);
     }
   }, []); // Empty dependency array means this runs once on mount
-
-  const [activeChat, setActiveChat] = useState<string>('1');
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-  const [inputValue, setInputValue] = useState<string>('');
-  const [isTyping, setIsTyping] = useState<boolean>(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // Helper to check if chat is new (only has initial greeting)
   const isNewChat = (chat: Chat): boolean => {
@@ -111,39 +125,12 @@ const PageLayout: React.FC = () => {
 
   // Handle prompt suggestion click
   const handlePromptClick = async (prompt: string): Promise<void> => {
-    if (isTyping) return;
+    if (isLoading) return;
     
-    setInputValue('');
-
-    const updatedChats = chats.map(chat => {
-      if (chat.id === activeChat) {
-        return {
-          ...chat,
-          messages: [...chat.messages, { role: 'user' as const, content: prompt }]
-        };
-      }
-      return chat;
+    await append({
+      role: 'user',
+      content: prompt
     });
-
-    setChats(updatedChats);
-    setIsTyping(true);
-
-    // Simulate response
-    setTimeout(() => {
-      const response: Message = { 
-        role: 'assistant', 
-        content: 'This is a simulated response to your prompt.' 
-      };
-      
-      setChats(prevChats => 
-        prevChats.map(chat => 
-          chat.id === activeChat 
-            ? { ...chat, messages: [...chat.messages, response] }
-            : chat
-        )
-      );
-      setIsTyping(false);
-    }, 1500);
   };
 
   const scrollToBottom = (): void => {
@@ -151,16 +138,20 @@ const PageLayout: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log("Sidebar state changed:", sidebarOpen);
+  }, [sidebarOpen]);
+
+  useEffect(() => {
     scrollToBottom();
-  }, [chats, isTyping]);
+  }, [chats, isLoading]);
 
   useEffect(() => {
     console.log('Active chat or model typing changed, attempting to focus input');
     inputRef.current?.focus();
-  }, [isTyping]);
+  }, [isLoading]);
 
   useEffect(() => {
-    if (!isTyping && window.innerWidth >= 768) { // Only auto-focus on desktop
+    if (!isLoading && window.innerWidth >= 768) { // Only auto-focus on desktop
       console.log('Active chat or model typing changed, attempting to focus input');
       inputRef.current?.focus();
     }
@@ -168,49 +159,13 @@ const PageLayout: React.FC = () => {
 
   const handleNewChat = (): void => {
     const newChat: Chat = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       title: 'New Chat',
       messages: []
     };
     setChats(prevChats => [...prevChats, newChat]);
     setActiveChat(newChat.id);
-    setInputValue('');
-    setIsTyping(false);
-  };
-
-  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
-    e.preventDefault();
-    if (!inputValue.trim() || isTyping) return;
-
-    const updatedChats = chats.map(chat => {
-      if (chat.id === activeChat) {
-        return {
-          ...chat,
-          messages: [...chat.messages, { role: 'user' as const, content: inputValue }]
-        };
-      }
-      return chat;
-    });
-
-    setChats(updatedChats);
-    setInputValue('');
-    setIsTyping(true);
-
-    setTimeout(() => {
-      const response: Message = { 
-        role: 'assistant', 
-        content: 'This is a simulated response.' 
-      };
-      
-      setChats(prevChats => 
-        prevChats.map(chat => 
-          chat.id === activeChat 
-            ? { ...chat, messages: [...chat.messages, response] }
-            : chat
-        )
-      );
-      setIsTyping(false);
-    }, 1500);
+    handleInputChange({ target: { value: '' } } as any);
   };
 
   const deleteChat = (chatId: string): void => {
@@ -225,13 +180,12 @@ const PageLayout: React.FC = () => {
 
   const handleClearConversations = (): void => {
     const newChat: Chat = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       title: 'New Chat',
       messages: []
     };
     setChats([newChat]);
     setActiveChat(newChat.id);
-    setIsTyping(false);
   };
 
   const currentChat = chats.find(chat => chat.id === activeChat);
@@ -322,7 +276,8 @@ const PageLayout: React.FC = () => {
                       setActiveChat(chat.id);
                     }}
                     className="flex-1 text-left text-[#28283B] flex items-center gap-2 text-nowrap"
-                  >
+                    disabled={isLoading}
+                    >
                     <Image
                       src="/chat.png"
                       alt="Chat Image"
@@ -334,8 +289,8 @@ const PageLayout: React.FC = () => {
                   <button 
                     onClick={() => deleteChat(chat.id)}
                     className="md:group-hover:opacity-100 md:opacity-0 opacity-100 text-[#28283B] hover:text-gray-200"
-                    // className="group opacity-0 group-hover:opacity-100 text-[#28283B] hover:text-gray-200"
-                  >
+                    disabled={isLoading}
+                    >
                     <Image
                       src="/trashcan.png"
                       alt="Delete Button"
@@ -358,6 +313,7 @@ const PageLayout: React.FC = () => {
                 }
               }}
               className={`${styles['sidebar-buttons']}`}
+              disabled={isLoading}
             >
               <Image
                 src="/plus.png"
@@ -371,6 +327,7 @@ const PageLayout: React.FC = () => {
             <button
               onClick={handleClearConversations}
               className={`${styles['sidebar-buttons']}`}
+              disabled={isLoading}
             >
               <Image
                 src="/trashcan.png"
@@ -383,6 +340,7 @@ const PageLayout: React.FC = () => {
             {/* Light Mode */}
             <button
               className={`${styles['sidebar-buttons']}`}
+              disabled={isLoading}
             >
               <Image
                 src="/light.png"
@@ -395,6 +353,7 @@ const PageLayout: React.FC = () => {
             {/* My Account */}
             <button
               className={`${styles['sidebar-buttons']}`}
+              disabled={isLoading}
             >
               <Image
                 src="/account.png"
@@ -407,6 +366,7 @@ const PageLayout: React.FC = () => {
             {/* Updates & FAQ */}
             <button
               className={`${styles['sidebar-buttons']}`}
+              disabled={isLoading}
             >
               <Image
                 src="/updates.png"
@@ -419,6 +379,7 @@ const PageLayout: React.FC = () => {
             {/* Log Out */}
             <button
               className={`${styles['sidebar-buttons']}`}
+              disabled={isLoading}
             >
               <Image
                 src="/logout.png"
@@ -466,7 +427,6 @@ const PageLayout: React.FC = () => {
                     </div>
                   </div>
                 ))}
-                {isTyping && <TypingIndicator />}
                 <div ref={messagesEndRef} />
               </div>
             </div>
@@ -483,7 +443,7 @@ const PageLayout: React.FC = () => {
                       key={suggestion.id}
                       onClick={() => handlePromptClick(suggestion.prompt)}
                       className={`${styles['prompt-buttons']}`}
-                      disabled={isTyping}
+                      disabled={isLoading}
                       type="button"
                     >
                       {suggestion.text}
@@ -507,20 +467,22 @@ const PageLayout: React.FC = () => {
                 <input
                   ref={inputRef}
                   type="text"
-                  value={inputValue}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputValue(e.target.value)}
+                  // value={inputValue}
+                  // onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputValue(e.target.value)}
+                  value={input}
+                  onChange={handleInputChange}
                   placeholder="What's on your mind?"
                   className={`w-full p-4 pl-12 pr-12 rounded-lg border border-gray-300 focus:outline-none focus:border-gray-400 text-[#28283B]
-                    ${ isTyping ? 'bg-gray-100' : ''
+                    ${ isLoading ? 'bg-gray-100' : ''
                     }`}
-                  disabled={isTyping}
+                  disabled={isLoading}
                   // autoFocus
                 />
                 <button 
                   type="submit"
-                  disabled={isTyping || !inputValue.trim()}
+                  disabled={isLoading || !input.trim()}
                   className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 ${
-                    isTyping || !inputValue.trim()
+                    isLoading || !input.trim()
                       ? 'text-gray-300' 
                       : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200'
                   }`}
