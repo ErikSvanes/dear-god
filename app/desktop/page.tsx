@@ -18,10 +18,6 @@ interface Chat {
   messages: Message[];
 }
 
-interface TypingIndicatorProps {
-  className?: string;
-}
-
 // Prompt suggestions array
 const PROMPT_SUGGESTIONS = [
   { id: 'advice', text: 'Give Advice', prompt: 'I need some general life advice.' },
